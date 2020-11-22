@@ -14,5 +14,7 @@ class MainActivity : AppCompatActivity() {
         tv.text = "${InvokeKotlinClass.getScreenWidth()},${FUCK_VAR}"
 
         Log.e("xiaojun","KotlinUtilsKt.getScreenWidth()=${InvokeKotlinClass.getScreenWidth()}")
+
+        Log.e("xiaojun","ExtendsFunctionClass Invoke:${InvokeKotlinClass.extendsFunction("leike")}")
     }
 }
