@@ -161,8 +161,46 @@ class Person3(val name: String) {
         override fun fromJSON(jsonText: String): Person3 = Person3("lixiaojun")
     }
 }
-//此时如果有这样一个抽象方法，实际上是可以传递
+
+//此时如果有这样一个抽象方法，实际上是可以传递伴生对象所在包裹类的类名即可
 fun <T> loadFromJSON(factory: JSONFactory<T>): T = factory.fromJSON("lxiaiojun")
+
+class Car(val brandName: String)
+
+//在类外部定义伴生对象的扩展函数
+class CarFactory {
+    //定义一个空的伴生对象
+    companion object {
+
+    }
+}
+
+//在外部定义CarFactory的伴生对象的扩展函数
+fun CarFactory.Companion.newInstance(brand: String): Car =
+    if (brand == "baoma") Car("宝马") else Car("其它车")
+
+//对象表达式:通过object关键字来声明匿名对象
+//和对象声明不同，对象声明是单例的，对象表达式每次都生成一个新的对象
+interface OnClickListener {
+    fun onClick()
+}
+
+fun method_testCallback(listener: OnClickListener) {
+    listener.onClick()
+}
+
+fun test222() {
+    var counter = 0
+
+    method_testCallback(
+        object : OnClickListener {
+            override fun onClick() {
+                counter++
+                println("被点击了 $counter 次")
+            }
+        }
+    )
+}
 
 fun main(args: Array<String>) {
     println(Client("xiaojun", 600004))
@@ -194,4 +232,12 @@ fun main(args: Array<String>) {
     val user = UserFactory2.INSTANCE.newInstance("lixiaojun")
     println("user.name=${user.name}")
     println("user.address=${user.address}")
+    val person3 = loadFromJSON(Person3)
+    println("person3.name=${person3.name}")
+
+    val baoma = CarFactory.newInstance("baoma")
+    val qitache = CarFactory.newInstance("baojun")
+    println("car.brandName=${baoma.brandName},qitache=${qitache.brandName}")
+
+    test222()
 }
