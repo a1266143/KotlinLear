@@ -1,5 +1,7 @@
 package com.example.kotlinlearn
 
+import java.io.File
+
 class Client(val name: String, val postalCode: Int) {
     //重写Client类的toString方法
     override fun toString(): String = "Client(name=$name,postalCode=$postalCode)"
@@ -77,6 +79,91 @@ class CountingSet<T>(
     }
 }
 
+//对象声明：创建单例模式(使用object关键字)
+object Payroll {
+    val allEmployees = arrayListOf<Person>()
+    fun calculateSalary() {
+        for (person in allEmployees) {
+            println("person.name=${person.name}")
+        }
+    }
+}
+
+object CaseInsensitiveFileComparator : Comparator<File> {
+    override fun compare(o1: File, o2: File): Int {
+        return o1.path.compareTo(o2.path, ignoreCase = true)
+    }
+}
+
+//在类中也可以使用对象声明，它们在每个容器类的实例中也只是一个对象，并不会不同
+data class PersonDataClass(val name: String) {
+    init {
+        println("调用了PersonDataClass的主构造方法")
+    }
+
+    //在类内部进行对象声明
+    object NameComparator : Comparator<PersonDataClass> {
+        override fun compare(o1: PersonDataClass, o2: PersonDataClass): Int =
+            o1.name.compareTo(o2.name, ignoreCase = true)
+    }
+}
+
+//伴生对象
+//为什么需要伴生对象:
+//1.kotlin不能使用static关键字(kotlin采用顶层函数和对象声明来替代static)
+//2.但是，顶层函数不能访问类的private成员，所以伴生对象的概念就产生了
+//伴生对象通过关键字companion object
+//伴生对象可以包含名称并且实现接口
+
+class A {
+    companion object {
+        //表明是共生对象
+        fun bar() {
+            println("Companion object called")
+        }
+    }
+}
+
+//通过伴生对象可以调用私有构造方法的工厂类
+class UserFactory private constructor(val nickname: String) {
+    init {
+        println("UserFactory私有构造方法被调用")
+    }
+
+    companion object {
+        fun newInstance(userName: String): User =
+            if (userName.equals("lixiaojun")) User(0, "lixiaojun", "东景丽舍") else User(
+                -1,
+                "NoName",
+                "NoAddress"
+            )
+    }
+}
+
+//伴生对象可以拥有名字
+class UserFactory2 {
+    companion object INSTANCE {
+        fun newInstance(name: String) = if (name == "lixiaojun") User(
+            id = 0,
+            name = "xaiojun",
+            address = "dongshunyuan"
+        ) else User(-1, "noName", "noAddress")
+    }
+}
+
+//伴生对象中实现接口
+interface JSONFactory<T> {
+    fun fromJSON(jsonText: String): T
+}
+
+class Person3(val name: String) {
+    companion object : JSONFactory<Person3> {
+        override fun fromJSON(jsonText: String): Person3 = Person3("lixiaojun")
+    }
+}
+//此时如果有这样一个抽象方法，实际上是可以传递
+fun <T> loadFromJSON(factory: JSONFactory<T>): T = factory.fromJSON("lxiaiojun")
+
 fun main(args: Array<String>) {
     println(Client("xiaojun", 600004))
 
@@ -91,4 +178,20 @@ fun main(args: Array<String>) {
 
     println(ClientDataClass("lixiaojun", 2))
     DelegatedCollection<String>(setOf())
+    //调用单例
+    Payroll.allEmployees.add(Person("xiaojun"))
+    Payroll.calculateSalary()
+    println(CaseInsensitiveFileComparator.compare(File("/sdcard/file1"), File("/sdcard/file1")))
+
+    val persons = listOf<PersonDataClass>(PersonDataClass("Aname"), PersonDataClass("Bname"))
+    println(persons.sortedWith(PersonDataClass.NameComparator))
+    A.bar()
+    val userLxj = UserFactory.newInstance("lixiaojun")
+    val userOther = UserFactory.newInstance("no")
+    println("lxj=${userLxj.name},no=${userOther.name}")
+
+    //伴生对象默认的名称为Companion
+    val user = UserFactory2.INSTANCE.newInstance("lixiaojun")
+    println("user.name=${user.name}")
+    println("user.address=${user.address}")
 }
