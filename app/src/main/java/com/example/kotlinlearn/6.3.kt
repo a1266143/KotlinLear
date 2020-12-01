@@ -2,6 +2,10 @@ package com.example.kotlinlearn
 
 import java.io.BufferedReader
 import java.lang.NumberFormatException
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashMap
 
 //创建一个包含可空值的集合
 fun readNumbers(reader: BufferedReader): List<Int?> {
@@ -52,6 +56,25 @@ fun <T> copyElements(
     }
 }
 
+//java中的集合在kotlin中都有两种表示:1.只读集合 2.可变集合
+val list:MutableCollection<String> = arrayListOf()
+
+//只读Map
+val map:Map<Int,String> = mapOf()
+//可变map
+val mutableMap:MutableMap<Int,String> = mutableMapOf()
+//HashMap,继承于MutableMap
+val hashMapNew:HashMap<Int,String> = hashMapOf()
+//linkedMap,继承于MutableMap
+val linkedMap:LinkedHashMap<Int,String> = linkedMapOf()
+//sortedMap,继承于MutableMap
+val sortedMap:SortedMap<Int,String> = sortedMapOf()
+
+//当集合作为java接口函数的参数的时候，kotlin实现需要做出选择，例如：
+/* java */
+/*interface FileContentProcessor {
+    void processContents(File path,byte[] binaryContents,List<String> textContents);
+}*/
 
 
 fun main(args: Array<String>) {
