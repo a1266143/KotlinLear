@@ -141,83 +141,117 @@ fun List<SiteVisit>.averageDurationFor(predicate: (SiteVisit) -> Boolean) =
 
 //----------------内联函数:消除lambda运行时开销-------------------------
 //当一个函数被声明为内联时，函数体会被直接替换到函数被调用的地方，而不是被正常调用
-inline fun <T> synchronized(lock:Lock,action:()->T):T{
+inline fun <T> synchronized(lock: Lock, action: () -> T): T {
     lock.lock()
     try {
         return action()
-    }
-    finally {
+    } finally {
         lock.unlock()
     }
 }
 
 //下面两个函数
-fun foo(l:Lock){
+fun foo(l: Lock) {
     println("同步之前")
-    synchronized(l){
+    synchronized(l) {
         println("Action")
     }
     println("同步之后")
 }
 
 //编译后的foo函数
-fun __foo__(l:Lock){
+fun __foo__(l: Lock) {
     println("同步之前")
     l.lock()
-    try{
+    try {
         println("Action")
-    }
-    finally {
+    } finally {
         l.unlock()
     }
     println("同步之后")
 }
 
-//TODO 内联函数的运作
+// 2020/12/2
+// 内联:被内联的函数，函数体会被直接替换到被调用的地方，并且内联的lambda表达式也会被内联（替换到被调用的地方）
+//因为lambda表达式会被正常编译成匿名类，每用一次lambda表达式，都会创建一个额外的类，这样就会影响性能
+//并且如果lambda捕捉了某个变量，那么每次调用的时候都会创建一个新的对象
+
+//在调用内联函数的时候也可以传递函数类型的变量作为参数
+class LockOwner(val lock: Lock) {
+    fun runUnderLock(body: () -> Unit) {
+        //synchronized本身已经被内联
+        //同时还可以传递函数类型的参数
+        //这种情况下，body是不会被内联的，
+        synchronized(lock, body)
+        //如果传递的是lambda表达式，就会被内联
+        synchronized(lock, { println("locked") })
+        //当lambda表达式为最后一个参数的时候，可以将lambda表达式移动到小括号外面
+        synchronized(lock) {
+            println("locked")
+        }
+        //一般来说，lambda参数如果直接被内联函数调用，或者传递给另外一个inline函数，它是可以内联的
+    }
+}
+
+class MySequence<T, R>(transform: ((T) -> R)) : Sequence<String> {
+    override fun iterator(): Iterator<String> {
+        return object : Iterator<String> {
+            override fun hasNext(): Boolean = false
+
+            override fun next(): String = "None"
+
+        }
+    }
+
+}
+
+//map函数并没直接调用lambda参数transform，而是传给了一个类的构造方法保存到属性中，
+//为了支持这一点，transform会被编译成一个实现了函数接口的匿名类
+fun <T, R> Sequence<T>.map(transform: (T) -> R): Sequence<R> {
+    return MySequence(transform) as Sequence<R>
+}
+
+//有些函数可能有多个lambda参数，可以选择只内联其中一些参数，可以通过关键字noinline来标识不允许内联使用
+//像下面这种
+inline fun foo(inlined: () -> Unit, noinline notInlined: () -> Unit) {
+
+}
+
+data class Person8(val name: String, val age: Int)
+
+val people = listOf(Person8("xiaojun", 29), Person8("qiuyue", 27))
+
+fun testInlineArrayOperation() {
+    println(people.filter {
+        it.age < 29
+    })
+}
+
+fun testInlineArrayOperation2() {
+    val result = mutableListOf<Person8>()
+    for (person in people) {
+        if (person.age < 29) result.add(person)
+    }
+    println(result)
+}
 
 fun main(args: Array<String>) {
-    testMethodTypeParam()
-    println("abcdef".filter { it > 'c' })
-    methodTypeParam2()//使用默认的函数参数
-    methodTypeParam2 { it * 2 }//传递一个函数
-    println(arrayListOf(1, 2, 3).joinToString3(
-        prefix = "{",
-        postfix = "}",
-        transform = { it.toString() }
-    ))
-    val calculator = getShippingCostCalculator(Delivery.EXPEDITED)
-    println(calculator(Order(3)))
-    println(averageWindowsDuration)
-    println(log.averageDurationFor(OS.MAC))
-    //同时对IOS和Android的访问用户
-    println(log.averageDurationFor { it.os in setOf(OS.IOS, OS.ANDROID) })
+//    testInlineArrayOperation()
+    testInlineArrayOperation2()
+//    testMethodTypeParam()
+//    println("abcdef".filter { it > 'c' })
+//    methodTypeParam2()//使用默认的函数参数
+//    methodTypeParam2 { it * 2 }//传递一个函数
+//    println(arrayListOf(1, 2, 3).joinToString3(
+//        prefix = "{",
+//        postfix = "}",
+//        transform = { it.toString() }
+//    ))
+//    val calculator = getShippingCostCalculator(Delivery.EXPEDITED)
+//    println(calculator(Order(3)))
+//    println(averageWindowsDuration)
+//    println(log.averageDurationFor(OS.MAC))
+//    //同时对IOS和Android的访问用户
+//    println(log.averageDurationFor { it.os in setOf(OS.IOS, OS.ANDROID) })
 
-    val l = object : Lock {
-        override fun lock() {
-
-        }
-
-        override fun lockInterruptibly() {
-            TODO("Not yet implemented")
-        }
-
-        override fun tryLock(): Boolean {
-            TODO("Not yet implemented")
-        }
-
-        override fun tryLock(time: Long, unit: TimeUnit?): Boolean {
-            TODO("Not yet implemented")
-        }
-
-        override fun unlock() {
-            TODO("Not yet implemented")
-        }
-
-        override fun newCondition(): Condition {
-            TODO("Not yet implemented")
-        }
-    }
-    synchronized(l){
-
-    }
 }
