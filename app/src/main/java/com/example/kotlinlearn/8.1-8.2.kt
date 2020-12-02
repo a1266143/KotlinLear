@@ -1,8 +1,13 @@
 package com.example.kotlinlearn
 
+import java.io.BufferedReader
+import java.io.FileReader
+import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.LockSupport
+import kotlin.concurrent.withLock
 
 //高阶函数:以另一个函数作为参数或者返回值的函数
 fun testHighLevelMethod() {
@@ -233,6 +238,62 @@ fun testInlineArrayOperation2() {
         if (person.age < 29) result.add(person)
     }
     println(result)
+}
+
+//withLock的使用
+val lock:Lock = object:Lock{
+    override fun lock() {
+
+    }
+
+    override fun tryLock(): Boolean = false
+
+    override fun tryLock(time: Long, unit: TimeUnit?): Boolean = false
+
+    override fun unlock() {
+
+    }
+
+    override fun lockInterruptibly() {
+
+    }
+
+    override fun newCondition(): Condition = object:Condition{
+        override fun signal() {
+
+        }
+
+        override fun await() {
+
+        }
+
+        override fun await(time: Long, unit: TimeUnit?): Boolean=false
+
+        override fun signalAll() {
+        }
+
+        override fun awaitNanos(nanosTimeout: Long): Long = 1L
+
+        override fun awaitUninterruptibly() {
+            TODO("Not yet implemented")
+        }
+
+        override fun awaitUntil(deadline: Date?): Boolean = false
+
+    }
+
+}
+
+fun testWithLock(){
+    lock.withLock {
+        //将需要加锁的操作放入此模块
+    }
+}
+
+fun readFirstLineFromFile(path:String):String{
+    BufferedReader(FileReader(path)).use {
+        return it.readLine()
+    }
 }
 
 fun main(args: Array<String>) {
